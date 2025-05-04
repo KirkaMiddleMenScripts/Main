@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Juicer Clicker</title>
+  <style>
+    /* General Body Styling */
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #ff416c, #ff4b2b); /* Solid gradient */
+      color: white;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+      text-align: center;
+    }
+
+    /* Heading Styling */
+    h1 {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.6);
+      letter-spacing: 1.5px;
+    }
+
+    /* Click Button Styling */
+    #clicker {
+      background: linear-gradient(to right, #ff416c, #ff4b2b);
+      border: none;
+      padding: 1.5rem 3rem;
+      font-size: 2rem;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.2s;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      font-weight: bold;
+    }
+
+    #clicker:active {
+      transform: scale(0.95);
+    }
+
+    /* Score Display */
+    #score {
+      margin-top: 1.5rem;
+      font-size: 2rem;
+      margin-bottom: 1.5rem;
+      text-shadow: 1px 1px 6px rgba(0, 0, 0, 0.6);
+    }
+
+    /* Buttons Styling */
+    #upgrade, #petStore, #doubleClick, #petBoost {
+      margin-top: 2rem;
+      background: linear-gradient(to right, #00b09b, #96c93d);
+      padding: 1rem 2rem;
+      border: none;
+      border-radius: 15px;
+      cursor: pointer;
+      font-size: 1.2rem;
+      color: white;
+      transition: background 0.3s, box-shadow 0.3s;
+    }
+
+    #upgrade:hover, #petStore:hover, #doubleClick:hover, #petBoost:hover {
+      background: linear-gradient(to right, #38ef7d, #11998e);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Store Info Styling */
+    #store {
+      margin-top: 1rem;
+      font-size: 1.2rem;
+      color: white;
+      text-shadow: 1px 1px 6px rgba(0, 0, 0, 0.6);
+    }
+
+    /* Level-up Notification Styling */
+    #levelUp {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #4caf50;
+      color: white;
+      padding: 15px 25px;
+      border-radius: 10px;
+      font-size: 1.5rem;
+      font-weight: bold;
+      text-shadow: 2px 2px rgba(0, 0, 0, 0.3);
+      opacity: 0;
+      transition: opacity 1s ease-out;
+      z-index: 1000;
+    }
+
+    .levelUp-active {
+      opacity: 1;
+    }
+
+    /* Name Input Form Styling */
+    #nameInput {
+      margin-top: 1rem;
+      font-size: 1.5rem;
+    }
+
+    #nameInput input {
+      padding: 10px;
+      font-size: 1.2rem;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      margin-right: 10px;
+    }
+
+    #nameInput button {
+      padding: 10px 15px;
+      font-size: 1.2rem;
+      border-radius: 8px;
+      border: none;
+      background-color: #38ef7d;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    #nameInput button:hover {
+      background-color: #11998e;
+    }
+  </style>
+</head>
+<body>
+  <h1>Juicer Clicker</h1>
+
+  <!-- Name Input Form -->
+  <div id="nameInput">
+    <input type="text" id="username" placeholder="Enter your name" />
+    <button id="startButton">Start Game</button>
+  </div>
+
+  <!-- Game Interface (Initially Hidden) -->
+  <div id="gameInterface" style="display: none;">
+    <div id="playerName"></div>
+    <button id="clicker">Click Me!</button>
+    <div id="score">Score: 0</div>
+
+    <div id="store">
+      <button id="upgrade">Buy Auto Clicker (Cost: 50)</button>
+      <button id="doubleClick">Buy Double Click (Cost: 100)</button>
+      <button id="petStore">Buy Pet (Cost: 200)</button>
+      <button id="petBoost">Buy Pet Boost (Cost: 500)</button>
+    </div>
+  </div>
+
+  <!-- Audio files -->
+  <audio id="clickSound" src="https://www.soundjay.com/button/beep-07.wav" preload="auto"></audio>
+  <audio id="purchaseSound" src="https://www.soundjay.com/button/button-09.wav" preload="auto"></audio>
+  <audio id="levelUpSound" src="https://www.soundjay.com/button/button-15.wav" preload="auto"></audio>
+
+  <!-- Level Up Notification -->
+  <div id="levelUp">Level Up!</div>
+
+  <script>
+    let score = 0;
+    let autoClickers = 0;
+    let doubleClick = false;
+    let pets = 0;
+    let petBoosters = 0;
+    let upgradeCost = 50;
+    let doubleClickCost = 100;
+    let petCost = 200;
+    let petBoostCost = 500;
+    let petIncome = 1; // Base pet income
+    let petBoost = 1; // Pet income booster
+    let playerName = '';
+
+    const startButton = document.getElementById('startButton');
+    const usernameInput = document.getElementById('username');
+    const gameInterface = document.getElementById('gameInterface');
+    const playerNameDiv = document.getElementById('playerName');
+    const clickerBtn = document.getElementById('clicker');
+    const scoreDiv = document.getElementById('score');
+    const upgradeBtn = document.getElementById('upgrade');
+    const doubleClickBtn = document.getElementById('doubleClick');
+    const petStoreBtn = document.getElementById('petStore');
+    const petBoostBtn = document.getElementById('petBoost');
+    const clickSound = document.getElementById('clickSound');
+    const purchaseSound = document.getElementById('purchaseSound');
+    const levelUpSound = document.getElementById('levelUpSound');
+    const levelUpDiv = document.getElementById('levelUp');
+
+    // Start Game Button functionality
+    startButton.addEventListener('click', () => {
+      playerName = usernameInput.value.trim();
+
+      if (playerName) {
+        playerNameDiv.textContent = `Player: ${playerName}`;
+        gameInterface.style.display = 'block';
+        document.getElementById('nameInput').style.display = 'none'; // Hide name input
+      } else {
+        alert('Please enter a name to start!');
+      }
+    });
+
+    // Play click sound when user clicks button
+    clickerBtn.addEventListener('click', () => {
+      let points = doubleClick ? 2 : 1; // Double points if Double Click is purchased
+      score += points;
+      updateScore();
+      playClickSound();
+    });
+
+    // Auto Clicker functionality
+    upgradeBtn.addEventListener('click', () => {
+      if (score >= upgradeCost) {
+        score -= upgradeCost;
+        autoClickers++;
+        upgradeCost = Math.floor(upgradeCost * 1.5);
+        upgradeBtn.textContent = `Buy Auto Clicker (Cost: ${upgradeCost})`;
+        updateScore();
+        playPurchaseSound();
+        showLevelUpNotification("Auto Clicker Purchased!");
+      }
+    });
+
+    // Double Click functionality
+    doubleClickBtn.addEventListener('click', () => {
+      if (score >= doubleClickCost) {
+        score -= doubleClickCost;
+        doubleClick = true;
+        doubleClickCost = Math.floor(doubleClickCost * 1.5);
+        doubleClickBtn.textContent = `Buy Double Click (Cost: ${doubleClickCost})`;
+        updateScore();
+        playPurchaseSound();
+        showLevelUpNotification("Double Click Purchased!");
+      }
+    });
+
+    // Pet Store functionality
+    petStoreBtn.addEventListener('click', () => {
+      if (score >= petCost) {
+        score -= petCost;
+        pets++;
+        petCost = Math.floor(petCost * 1.5);
+        petStoreBtn.textContent = `Buy Pet (Cost: ${petCost})`;
+        updateScore();
+        storeInfo();
+        playPurchaseSound();
+        showLevelUpNotification("Pet Purchased!");
+      }
+    });
+
+    // Pet Boost functionality
+    petBoostBtn.addEventListener('click', () => {
+      if (score >= petBoostCost) {
+        score -= petBoostCost;
+        petBoosters++;
+        petBoostCost = Math.floor(petBoostCost * 1.5);
+        petBoostBtn.textContent = `Buy Pet Boost (Cost: ${petBoostCost})`;
+        petIncome = 1 + petBoosters * 0.5; // Increase pet income with boosters
+        updateScore();
+        storeInfo();
+        playPurchaseSound();
+        showLevelUpNotification("Pet Boost Purchased!");
+      }
+    });
+
+    // Update score on screen
+    function updateScore() {
+      scoreDiv.textContent = `Score: ${score}`;
+    }
+
+    // Play the click sound effect
+    function playClickSound() {
+      clickSound.play();
+    }
+
+    // Play the purchase sound effect
+    function playPurchaseSound() {
+      purchaseSound.play();
+    }
+
+    // Show the Level Up notification
+    function showLevelUpNotification(message) {
+      levelUpDiv.textContent = message;
+      levelUpDiv.classList.add('levelUp-active');
+      setTimeout(() => {
+        levelUpDiv.classList.remove('levelUp-active');
+      }, 2500); // Notification stays for 2.5 seconds
+      levelUpSound.play(); // Play level-up sound
+    }
+
+    // Display pet information
+    function storeInfo() {
+      storeDiv.innerHTML = `You own ${pets} pet(s). They earn ${petIncome * pets} points per second!`;
+    }
+
+    // Auto-increment score based on autoClickers and pets
+    setInterval(() => {
+      score += autoClickers;
+      score += petIncome * pets; // Pets add passive points
+      updateScore();
+    }, 1000);
+  </script>
+</body>
+</html>
