@@ -12,4 +12,4 @@
 
 > The Owner of this Script is **[@SheriffCarry](https://github.com/SheriffCarry)**
 
-> Download link > 
+> Download link > [v1](https://raw.githubusercontent.com/KirkaMiddleMenScripts/Main/refs/heads/main/Scripts/kirka-prefixesv1.js), [v2](https://raw.githubusercontent.com/KirkaMiddleMenScripts/Main/refs/heads/main/Scripts/kirka-prefixesv2.js)
