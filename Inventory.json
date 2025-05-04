@@ -7,6 +7,7 @@
   "JuicerAkuma": {
     "Items": ["Ritual", "Vocaloid", "Write", "Gluerf"],
     "Counts": {
+      "Wood": "5",
       "Vampire": "3",
       "Grass": "136",
       "Swirl": "49"
