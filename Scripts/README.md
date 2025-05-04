@@ -1,4 +1,4 @@
-# Kirka Goggle api Badge Script
+# Kirka Google api Badge Script
 
 1. Download The script
 
