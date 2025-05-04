@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Kirka Chat Viewer</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #121212;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      max-width: 800px;
+      margin-bottom: 20px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+    .token-form {
+      display: flex;
+      gap: 10px;
+    }
+    input[type="text"], input[type="password"] {
+      padding: 8px;
+      border-radius: 6px;
+      border: none;
+      width: 250px;
+    }
+    button {
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: none;
+      background-color: #5865F2;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #4752c4;
+    }
+    #user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    #chat {
+      width: 100%;
+      max-width: 800px;
+      background-color: #1e1e1e;
+      border-radius: 10px;
+      padding: 20px;
+      overflow-y: auto;
+      height: 500px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      margin-bottom: 10px;
+    }
+    .message {
+      margin-bottom: 10px;
+      padding: 10px;
+      background: #2a2a2a;
+      border-radius: 5px;
+      white-space: pre-wrap;
+    }
+    .highlight {
+      color: #FFEB3B;
+      font-weight: bold;
+    }
+    .server {
+      color: #1E90FF;
+      font-weight: bold;
+    }
+    .user-info {
+      color: #FFA500;
+      font-weight: bold;
+    }
+    .user-level {
+      color: #32CD32;
+      font-weight: bold;
+    }
+    .Mythical { background-color: darkred; }
+    .Common { background-color: green; }
+    .Rare { background-color: lightblue; }
+    .Epic { background-color: purple; }
+    .Unreleased { background-color: gray; }
+    .Legendary { background-color: yellow; }
+    .Default { background-color: #444; }
+    #message-form {
+      width: 100%;
+      max-width: 800px;
+      display: flex;
+      gap: 10px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Kirka Chat Viewer</h1>
+    <form id="token-form" class="token-form">
+      <input type="password" id="tokenInput" placeholder="Enter Kirka Token" />
+      <button type="submit">Login</button>
+    </form>
+  </header>
+
+  <div id="user-info"></div>
+  <div id="chat"></div>
+  <form id="message-form">
+    <input type="text" id="messageInput" placeholder="Type your message..." autocomplete="off" />
+    <button type="submit">Send</button>
+  </form>
+
+  <script>
+    const chatContainer = document.getElementById('chat');
+    const userInfo = document.getElementById('user-info');
+    const tokenForm = document.getElementById('token-form');
+    const messageForm = document.getElementById('message-form');
+    const tokenInput = document.getElementById('tokenInput');
+    const messageInput = document.getElementById('messageInput');
+    let socket;
+
+    // Load token from localStorage on startup
+    document.addEventListener('DOMContentLoaded', () => {
+      const savedToken = localStorage.getItem('kirkaToken');
+      if (savedToken) {
+        tokenInput.value = savedToken;
+        initSocket(savedToken);
+      }
+    });
+
+    // Handle login form
+    tokenForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const token = tokenInput.value.trim();
+      if (!token) return;
+      localStorage.setItem('kirkaToken', token);
+      initSocket(token);
+    });
+
+    // Initialize WebSocket with subprotocol as token
+    function initSocket(token) {
+      if (socket) {
+        socket.close();
+      }
+      appendSystemMessage('Connecting...');
+      socket = new WebSocket('wss://chat.kirka.io', token);
+
+      socket.onopen = () => {
+        appendSystemMessage('Connected to Kirka Chat');
+      };
+
+      socket.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === 2 || data.type === 13) {
+            appendMessage(data);
+          }
+        } catch (e) {
+          // Non-JSON message, treat as plain chat
+          appendRawMessage(event.data);
+        }
+      };
+
+      socket.onerror = (err) => {
+        appendSystemMessage('Error connecting to chat');
+        console.error(err);
+      };
+
+      socket.onclose = () => {
+        appendSystemMessage('Disconnected');
+      };
+    }
+
+    // Handle sending messages
+    messageForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const msg = messageInput.value.trim();
+      if (!msg || !socket || socket.readyState !== WebSocket.OPEN) return;
+      socket.send(msg);
+      messageInput.value = '';
+    });
+
+    function appendMessage(data) {
+      const msg = document.createElement('div');
+      msg.className = 'message';
+
+      // Get prefix based on user ID
+      const userPrefix = customPrefixes[data.user?.id] || '';
+
+      const messageText = data.message || '';
+
+      const userName = data.user
+        ? `[<span class="user-level">${data.user.level}</span>] <span class="user-info">${userPrefix} ${data.user.name}</span>`
+        : '';
+
+      if (data.type === 13) {
+        msg.innerHTML = `${userName} <span class="server">Server</span> ${highlightBoldText(messageText)}`;
+      } else {
+        msg.innerHTML = `${userName} ${highlightBoldText(messageText)}`;
+      }
+
+      chatContainer.appendChild(msg);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function appendRawMessage(text) {
+      const msg = document.createElement('div');
+      msg.className = 'message';
+      msg.textContent = text;
+      chatContainer.appendChild(msg);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function appendSystemMessage(text) {
+      const msg = document.createElement('div');
+      msg.className = 'message server';
+      msg.textContent = text;
+      chatContainer.appendChild(msg);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function highlightBoldText(text) {
+      if (typeof text === 'string') {
+        return text.replace(/\*\*(.*?)\*\*/g, '<span class="highlight">$1</span>');
+      }
+      return text;
+    }
+
+    // Custom prefixes mapping
+    const customPrefixes = {
+      '53f680b4-3f90-4d5d-a1ea-db399e60da20': '[KMM]',
+      '7d3487e3-6cb9-4ff3-9dbc-cc20aa27d105': '[KMM]',
+      '54a39506-bd64-4374-84aa-53cc2ecd99bb': '[KMM]',
+      '119d041b-f8b7-4aa5-9be9-fb0e40f92f43': '[BOT]',
+      '28d8754d-f915-48b9-9675-6a03c979c372': '[KMM]',
+      '4592f852-54f1-4f7b-af8b-83a72a246104': '[Temp Host]',
+      '0f194987-c7d8-4688-9559-c13d4c59e948': '[Akumas Dad :eyes:]',
+      'ef15683d-10d8-4276-afc3-d55efef75ac3': '[BlackListed]',
+      '0734b728-6c87-46b0-8b8a-c15b73a05263': '[BlackListed] + BANNED LMAOOO',
+      'dbde3d08-69fd-4d0e-8a3f-f19c06346f86': '[BlackListed] + BANNED LMAOOO',
+      'eca3be06-861f-45a1-88fe-10da56df4862': '[BlackListed]',
+      '30dc337c-ed61-49ea-ba08-04f47b7fad34': '[BlackListed]',
+      'b2ad9d55-4327-475b-92fe-fe587ff4b8c0': '[BlackListed]',
+      '9a527630-5f03-4da1-ae6e-faa6eec5320f': '[BlackListed]',
+    };
+  </script>
+</body>
+</html>
