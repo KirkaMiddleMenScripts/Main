@@ -7,17 +7,17 @@
   "From Akuma": {
     "Items": ["Ritual", "Vocaloid", "Write", "Vampire", "Gluerf", "Grass", "Swirl"],
     "Counts": {
-      "Vampire": "x3",
-      "Grass": "x136",
-      "Swirl": "x49"
+      "Vampire": "3",
+      "Grass": "136",
+      "Swirl": "49"
     },
     "Coins": 20000
   },
   "From EnB": {
     "Items": ["Lis", "Volcaic", "Petal", "Kraken", "Waves", "Cinder", "2025", "Teddy", "LMAO"],
     "Counts": {
-      "Volcaic": "x3",
-      "Kraken": "x2"
+      "Volcaic": "3",
+      "Kraken": "2"
     }
   }
 }
