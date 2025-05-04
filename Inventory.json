@@ -17,19 +17,19 @@
       "Vocaloid",
       "Write",
       "Gluerf",
-      "Wood",
       "Periodic",
       "Soldiers",
       "Ice",
       "Cold",
       "Party",
       "Golden",
-      "Girls band"
+      "Girls band",
     ],
     "Counts": {
       "Vampire": "3",
       "Grass": "136",
-      "Swirl": "49"
+      "Swirl": "49",
+      "wood": "5"
     },
     "Coins": 20000
   },
