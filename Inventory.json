@@ -5,7 +5,7 @@
     "Coins": 50000
   },
   "From Akuma": {
-    "Items": ["Ritual", "Vocaloid", "Write", "Vampire", "Gluerf", "Grass", "Swirl"],
+    "Items": ["Ritual", "Vocaloid", "Write", "Gluerf", "Swirl"],
     "Counts": {
       "Vampire": "3",
       "Grass": "136",
