@@ -1,0 +1,23 @@
+{
+  "Donations": ["Celebrate"],
+  "From Ab4": {
+    "Items": ["Pebbles", "Baldwin", "LMAOx1", "Jaymeson"],
+    "Coins": 50000
+  },
+  "From Akuma": {
+    "Items": ["Ritual", "Vocaloid", "Write", "Vampire", "Gluerf", "Grass", "Swirl"],
+    "Counts": {
+      "Vampire": "x3",
+      "Grass": "x136",
+      "Swirl": "x49"
+    },
+    "Coins": 20000
+  },
+  "From EnB": {
+    "Items": ["Lis", "Volcaic", "Petal", "Kraken", "Waves", "Cinder", "2025", "Teddy", "LMAOx1"],
+    "Counts": {
+      "Volcaic": "x3",
+      "Kraken": "x2"
+    }
+  }
+}
