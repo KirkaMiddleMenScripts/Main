@@ -1,49 +1,20 @@
 {
-  "Donations": [
-    "Celebrate"
-  ],
+  "Donations": ["Celebrate"],
   "Ab4/yt": {
-    "Items": [
-      "Pebbles",
-      "Baldwin",
-      "LMAO",
-      "Jaymeson"
-    ],
+    "Items": ["Pebbles", "Baldwin", "LMAO", "Jaymeson"],
     "Coins": 50000
   },
   "JuicerAkuma": {
-    "Items": [
-      "Ritual",
-      "Vocaloid",
-      "Write",
-      "Gluerf",
-      "Periodic",
-      "Soldiers",
-      "Ice",
-      "Cold",
-      "Party",
-      "Golden",
-      "Girls band",
-    ],
+    "Items": ["Ritual", "Vocaloid", "Write", "Gluerf", "Wood", "Periodic", "Soldiers", "Ice", "Cold", "Party", "Golden", "Girls band"],
     "Counts": {
       "Vampire": "3",
       "Grass": "136",
-      "Swirl": "49",
-      "wood": "5"
+      "Swirl": "49"
     },
     "Coins": 20000
   },
   "EnB": {
-    "Items": [
-      "Lis",
-      "Petal",
-      "Kraken",
-      "Waves",
-      "Cinder",
-      "2025",
-      "Teddy",
-      "LMAO"
-    ],
+    "Items": ["Lis", "Petal", "Kraken", "Waves", "Cinder", "2025", "Teddy", "LMAO"],
     "Counts": {
       "Volcaic": "3",
       "Kraken": "2"
