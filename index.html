@@ -183,6 +183,31 @@
       const skin = skinMap[baseName];
 
       div.textContent = name;
+
+      // Set rarity-based background color
+      if (skin && skin["Rarity"]) {
+        switch (skin["Rarity"].toLowerCase()) {
+          case "mythical":
+            div.style.backgroundColor = "#9e1b32"; // Darkish red for Mythical
+            break;
+          case "legendary":
+            div.style.backgroundColor = "#ff8c00"; // Orange for Legendary
+            break;
+          case "epic":
+            div.style.backgroundColor = "#6a4cf7"; // Purple for Epic
+            break;
+          case "rare":
+            div.style.backgroundColor = "#42a5f5"; // Blue for Rare
+            break;
+          case "common":
+            div.style.backgroundColor = "#7f8c8d"; // Grey for Common
+            break;
+          default:
+            div.style.backgroundColor = "#0d1117"; // Default background
+            break;
+        }
+      }
+
       if (skin && skin["Image Url"]) {
         const img = document.createElement("img");
         img.src = skin["Image Url"];
