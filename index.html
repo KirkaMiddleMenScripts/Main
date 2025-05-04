@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>KMM Inventory</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 30px;
+      background-color: #0d1117;
+      color: #c9d1d9;
+    }
+    h1 {
+      color: #58a6ff;
+      font-size: 2em;
+      margin-bottom: 20px;
+    }
+    .inventory-section {
+      background-color: #161b22;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 25px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      transition: transform 0.2s;
+    }
+    .inventory-section:hover {
+      transform: translateY(-3px);
+    }
+    .section-title {
+      font-size: 1.3em;
+      color: #ffa657;
+      margin-bottom: 12px;
+      border-bottom: 1px solid #30363d;
+      padding-bottom: 4px;
+    }
+    .item-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .item-card {
+      background-color: #0d1117;
+      border: 1px solid #30363d;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 0.95em;
+      color: #8b949e;
+    }
+    .coin-count {
+      font-weight: bold;
+      color: #39d353;
+    }
+    .skin-image {
+      width: 100px;
+      height: auto;
+      border-radius: 6px;
+      display: block;
+      margin-top: 6px;
+    }
+    .username {
+      font-size: 1.5em;
+      font-weight: bold;
+      color: #58a6ff;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>KMM Inventory Viewer</h1>
+  <div id="inventory-container">Loading...</div>
+
+  <script>
+    const inventoryURL = "https://raw.githubusercontent.com/KirkaMiddleMenScripts/Main/main/Inventory.json";
+    const skinDataURL = "https://opensheet.elk.sh/1tzHjKpu2gYlHoCePjp6bFbKBGvZpwDjiRzT9ZUfNwbY/alphabetical";
+
+    let skinMap = {};
+
+    fetch(skinDataURL)
+      .then(res => res.json())
+      .then(skinData => {
+        skinData.forEach(skin => {
+          skinMap[skin["Skin Name"]] = skin;
+        });
+        return fetch(inventoryURL);
+      })
+      .then(response => {
+        if (!response.ok) throw new Error("Network response was not ok");
+        return response.json();
+      })
+      .then(data => {
+        const container = document.getElementById("inventory-container");
+        container.innerHTML = '';
+
+        // Loop through each user in the inventory data
+        Object.entries(data).forEach(([user, value]) => {
+          const div = document.createElement("div");
+          div.className = "inventory-section";
+
+          // Username display
+          const usernameDiv = document.createElement("div");
+          usernameDiv.className = "username";
+          usernameDiv.textContent = `User: ${user}`;
+          div.appendChild(usernameDiv);
+
+          const characterItems = [];
+          const otherItems = [];
+
+          if (Array.isArray(value)) {
+            value.forEach(item => {
+              const itemCard = createCard(item);
+              if (isCharacterItem(item)) {
+                characterItems.push(itemCard);
+              } else {
+                otherItems.push(itemCard);
+              }
+            });
+          } else {
+            if (value.Items) {
+              value.Items.forEach(item => {
+                const itemCard = createCard(item);
+                if (isCharacterItem(item)) {
+                  characterItems.push(itemCard);
+                } else {
+                  otherItems.push(itemCard);
+                }
+              });
+            }
+            if (value.Counts) {
+              for (const [item, count] of Object.entries(value.Counts)) {
+                const itemCard = createCard(`${item} x${count}`);
+                otherItems.push(itemCard);
+              }
+            }
+            if (value.Coins) {
+              const coinCard = document.createElement("div");
+              coinCard.className = "item-card coin-count";
+              coinCard.textContent = `Coins: ${value.Coins.toLocaleString()}`;
+              otherItems.push(coinCard);
+            }
+          }
+
+          // Create sections for Character and Other skins for each user
+          if (characterItems.length > 0) {
+            const characterDiv = document.createElement("div");
+            characterDiv.className = "inventory-section";
+            const characterTitle = document.createElement("div");
+            characterTitle.className = "section-title";
+            characterTitle.textContent = ""; // Title for Character skins
+            characterDiv.appendChild(characterTitle);
+            const characterList = document.createElement("div");
+            characterList.className = "item-list";
+            characterItems.forEach(card => characterList.appendChild(card));
+            characterDiv.appendChild(characterList);
+            div.appendChild(characterDiv);
+          }
+
+          if (otherItems.length > 0) {
+            const otherDiv = document.createElement("div");
+            otherDiv.className = "inventory-section";
+            const otherTitle = document.createElement("div");
+            otherTitle.className = "section-title";
+            otherTitle.textContent = ""; // Title for Other items
+            otherDiv.appendChild(otherTitle);
+            const otherList = document.createElement("div");
+            otherList.className = "item-list";
+            otherItems.forEach(card => otherList.appendChild(card));
+            otherDiv.appendChild(otherList);
+            div.appendChild(otherDiv);
+          }
+
+          container.appendChild(div);
+        });
+      })
+      .catch(error => {
+        document.getElementById("inventory-container").textContent = "Error loading data: " + error;
+      });
+
+    function createCard(name) {
+      const div = document.createElement("div");
+      div.className = "item-card";
+
+      const baseName = name.split(" x")[0];
+      const skin = skinMap[baseName];
+
+      div.textContent = name;
+      if (skin && skin["Image Url"]) {
+        const img = document.createElement("img");
+        img.src = skin["Image Url"];
+        img.alt = baseName;
+        img.className = "skin-image";
+        div.appendChild(img);
+      }
+
+      return div;
+    }
+
+    function isCharacterItem(item) {
+      const baseName = item.split(" x")[0];
+      const skin = skinMap[baseName];
+      return skin && skin["Type"] === "Character";
+    }
+  </script>
+</body>
+</html>
