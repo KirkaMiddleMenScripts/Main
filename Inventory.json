@@ -14,7 +14,7 @@
     "Coins": 20000
   },
   "From EnB": {
-    "Items": ["Lis", "Volcaic", "Petal", "Kraken", "Waves", "Cinder", "2025", "Teddy", "LMAO"],
+    "Items": ["Lis", "Petal", "Kraken", "Waves", "Cinder", "2025", "Teddy", "LMAO"],
     "Counts": {
       "Volcaic": "3",
       "Kraken": "2"
