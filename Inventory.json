@@ -1,10 +1,10 @@
 {
   "Donations": ["Celebrate"],
-  "From Ab4": {
+  "Ab4/yt": {
     "Items": ["Pebbles", "Baldwin", "LMAO", "Jaymeson"],
     "Coins": 50000
   },
-  "From Akuma": {
+  "JuicerAkuma": {
     "Items": ["Ritual", "Vocaloid", "Write", "Gluerf", "Swirl"],
     "Counts": {
       "Vampire": "3",
@@ -13,7 +13,7 @@
     },
     "Coins": 20000
   },
-  "From EnB": {
+  "EnB": {
     "Items": ["Lis", "Petal", "Kraken", "Waves", "Cinder", "2025", "Teddy", "LMAO"],
     "Counts": {
       "Volcaic": "3",
