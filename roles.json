@@ -1,5 +1,10 @@
 {
-  "Y2OOB2": "KMM",
-  "YMLB6S": "blacklisted",
-  "WERWER": "Test"
+  "roles": {
+    "Y2OOB2": "KMM",
+    "YMLB6S": "blacklisted"
+  },
+  "webhookTargets": {
+    "KMM": "https://discord.com/api/webhooks/1362244294962057366/ZlSuw9yfQBJ3WQ2AHqxH6Bs46FmhpEBT7AltUyP-u645YnBimLkr51FU4vF8knhDKAPg",
+    "blacklisted": "https://discord.com/api/webhooks/1362298396383117504/LhmOKJC0pEuj9o9PwHIuQ72diqnawn5pZ738JlzdYZ6OA42mg_DQZ7n8rdH50TTYK-k_"
+  }
 }
