@@ -1,229 +1,294 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>KMM Inventory</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      padding: 30px;
-      background-color: #0d1117;
-      color: #c9d1d9;
-    }
-    h1 {
-      color: #58a6ff;
-      font-size: 2em;
-      margin-bottom: 20px;
-    }
-    .inventory-section {
-      background-color: #161b22;
-      padding: 20px;
-      border-radius: 12px;
-      margin-bottom: 25px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-      transition: transform 0.2s;
-    }
-    .inventory-section:hover {
-      transform: translateY(-3px);
-    }
-    .section-title {
-      font-size: 1.3em;
-      color: #ffa657;
-      margin-bottom: 12px;
-      border-bottom: 1px solid #30363d;
-      padding-bottom: 4px;
-    }
-    .item-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-    .item-card {
-      background-color: #0d1117;
-      border: 1px solid #30363d;
-      padding: 10px 14px;
-      border-radius: 8px;
-      font-size: 0.95em;
-      color: #8b949e;
-    }
-    .coin-count {
-      font-weight: bold;
-      color: #39d353;
-    }
-    .skin-image {
-      width: 100px;
-      height: auto;
-      border-radius: 6px;
-      display: block;
-      margin-top: 6px;
-    }
-    .username {
-      font-size: 1.5em;
-      font-weight: bold;
-      color: #58a6ff;
-      margin-bottom: 10px;
-    }
-  </style>
-</head>
-<body>
-  <h1>KMM Inventory Viewer</h1>
-  <div id="inventory-container">Loading...</div>
 
-  <script>
-    const inventoryURL = "https://kirkamiddlemenscripts.github.io/Main/Inventory.json";
-    const skinDataURL = "https://opensheet.elk.sh/1tzHjKpu2gYlHoCePjp6bFbKBGvZpwDjiRzT9ZUfNwbY/alphabetical";
 
-    let skinMap = {};
 
-    fetch(skinDataURL)
-      .then(res => res.json())
-      .then(skinData => {
-        skinData.forEach(skin => {
-          skinMap[skin["Skin Name"]] = skin;
-        });
-        return fetch(inventoryURL);
-      })
-      .then(response => {
-        if (!response.ok) throw new Error("Network response was not ok");
-        return response.json();
-      })
-      .then(data => {
-        const container = document.getElementById("inventory-container");
-        container.innerHTML = '';
 
-        // Loop through each user in the inventory data
-        Object.entries(data).forEach(([user, value]) => {
-          const div = document.createElement("div");
-          div.className = "inventory-section";
 
-          // Username display
-          const usernameDiv = document.createElement("div");
-          usernameDiv.className = "username";
-          usernameDiv.textContent = `User: ${user}`;
-          div.appendChild(usernameDiv);
 
-          const characterItems = [];
-          const otherItems = [];
 
-          if (Array.isArray(value)) {
-            value.forEach(item => {
-              const itemCard = createCard(item);
-              if (isCharacterItem(item)) {
-                characterItems.push(itemCard);
-              } else {
-                otherItems.push(itemCard);
-              }
-            });
-          } else {
-            if (value.Items) {
-              value.Items.forEach(item => {
-                const itemCard = createCard(item);
-                if (isCharacterItem(item)) {
-                  characterItems.push(itemCard);
-                } else {
-                  otherItems.push(itemCard);
-                }
-              });
-            }
-            if (value.Counts) {
-              for (const [item, count] of Object.entries(value.Counts)) {
-                const itemCard = createCard(`${item} x${count}`);
-                otherItems.push(itemCard);
-              }
-            }
-            if (value.Coins) {
-              const coinCard = document.createElement("div");
-              coinCard.className = "item-card coin-count";
-              coinCard.textContent = `Coins: ${value.Coins.toLocaleString()}`;
-              otherItems.push(coinCard);
-            }
-          }
 
-          // Create sections for Character and Other skins for each user
-          if (characterItems.length > 0) {
-            const characterDiv = document.createElement("div");
-            characterDiv.className = "inventory-section";
-            const characterTitle = document.createElement("div");
-            characterTitle.className = "section-title";
-            characterTitle.textContent = ""; // Title for Character skins
-            characterDiv.appendChild(characterTitle);
-            const characterList = document.createElement("div");
-            characterList.className = "item-list";
-            characterItems.forEach(card => characterList.appendChild(card));
-            characterDiv.appendChild(characterList);
-            div.appendChild(characterDiv);
-          }
 
-          if (otherItems.length > 0) {
-            const otherDiv = document.createElement("div");
-            otherDiv.className = "inventory-section";
-            const otherTitle = document.createElement("div");
-            otherTitle.className = "section-title";
-            otherTitle.textContent = ""; // Title for Other items
-            otherDiv.appendChild(otherTitle);
-            const otherList = document.createElement("div");
-            otherList.className = "item-list";
-            otherItems.forEach(card => otherList.appendChild(card));
-            otherDiv.appendChild(otherList);
-            div.appendChild(otherDiv);
-          }
 
-          container.appendChild(div);
-        });
-      })
-      .catch(error => {
-        document.getElementById("inventory-container").textContent = "Error loading data: " + error;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  const chatSocketUrl = 'wss://chat.kirka.io';
+  const playerWebhookUrl = 'https://discord.com/api/webhooks/1363621916522315836/l-t82SbiXwSwdMdNbZXwf6CREW4lL_jjGiLuJZO8AFoF9_x_JBtrV9troDIsT8U_3jzZ';
+  const serverWebhookUrl = 'https://discord.com/api/webhooks/1363613450630336733/WQSQxthXMLZHI9vOneD5YbJwNavMAnZ97EgDMu9lzmTb8cKhjOqJTJ6p4P2xlxB3KQXE';
+  const botWebhookUrl = 'https://discord.com/api/webhooks/1363614158880379031/RNs_NqZtxLdzLVNPe8q8TUgZYqryjd55z-8H1LWf7tYss9ovjyIsSFCJHaByVN8VM7Vs';
+  const blacklistedWebhookUrl = 'https://discord.com/api/webhooks/1363614726034030694/bXi1odHhLAgTOSrONW4RzN0HgRfmVZ8PK7-Wqc7XE6R_5qKfUDuPheMglL_0s4yZP1pw';
+  const muteWebhookUrl = 'https://discord.com/api/webhooks/1362949134159577269/OhPRDbmEB4WS0wlk4yonfvijluiwpKAWP3_VP5wTOn3KVckT4zyUXE1LLT4OXDprdNxN';
+  const logWebhookUrl = 'https://discord.com/api/webhooks/1363629248849641553/U1HPRMJlmyIbCYHa4Yr5Dc2m7fn0So9K5xkaEEU7ecNUnr8tTjuMd8GbPJbIp1kPiFrw';
+
+  const avatarUrls = {
+    player: "https://cdn.discordapp.com/guilds/1015236012768768131/users/1169111190824308768/avatars/536ab8a4f7c8f2de8a6c00d71fb00a9a.webp?size=128",
+    server: "https://cdn.discordapp.com/avatars/1362250944028610782/70949e3b94c1148936467ac5bbc8065a.webp?size=128",
+    log: "https://cdn.discordapp.com/avatars/1362267378972496074/420f972e086c4db2ffd1c5827031e603.webp?size=128",
+    blacklisted: "https://cdn.discordapp.com/avatars/1362298396383117504/c49a052e24edb8a63a589129cf89a9a4.webp?size=128",
+    bot: "https://cdn.discordapp.com/embed/avatars/0.png"
+  };
+
+  const customPrefixes = {
+    '53f680b4-3f90-4d5d-a1ea-db399e60da20': '[KMM]',
+    '7d3487e3-6cb9-4ff3-9dbc-cc20aa27d105': '[KMM] [CC]',
+    '54a39506-bd64-4374-84aa-53cc2ecd99bb': '[KMM]',
+    '119d041b-f8b7-4aa5-9be9-fb0e40f92f43': '[BOT]',
+    '13be73e1-7adb-400c-8b11-70c34bcf985c': '[BOT]',
+    '28d8754d-f915-48b9-9675-6a03c979c372': '[KMM]',
+    '4592f852-54f1-4f7b-af8b-83a72a246104': '[Temp Host]',
+    '0f194987-c7d8-4688-9559-c13d4c59e948': '[Dad + Temp Host]',
+    'ef15683d-10d8-4276-afc5-d55efef75ac3': '[BlackListed]',
+    '464b7a8b-e4c2-4aba-af99-3c3276b172fb': '[BlackListed]',
+    '0734b728-6c87-46b0-8b8a-c15b73a05263': '[BlackListed]',
+    'dbde3d08-69fd-4d0e-8a3f-f19c06346f86': '[BlackListed]',
+    '40f6156a-c6cb-47f4-a69c-2f92ca12eb26': '[BlackListed]',
+    '645164da-e39e-4d83-b8ea-0b0d1d80838c': '[BlackListed]',
+    'ee28ede2-1bf4-4bb1-ba0f-8970c9075ca0': '[BlackListed]',
+    '99c3d646-4ce1-4a0e-b73e-d41cb711f063': '[BlackListed]',
+    '0909a116-4e5b-42fb-9f7b-ca9b4f776a26': '[BlackListed]',
+    'da9be2a5-a2a5-437b-bfce-7bfbd1f66926': '[BlackListed]',
+    '9a527630-5f03-4da1-ae6e-faa6eec5320f': '[BlackListed]',
+    '30dc337c-ed61-49ea-ba08-04f47b7fad34': '[BlackListed]',
+    '721725a5-c851-4ec7-95e7-8cf17d8da62f': '[BlackListed]',
+    '083dd93b-d1b6-4242-8c09-e4642609c047': '[BlackListed]',
+    '8d0f388f-d829-4a3e-827d-5ae362270211': '[BlackListed]',
+    '759f4122-ef7d-41cd-8b1e-ccb5e5028d92': '[BlackListed]',
+    'be17161d-2b56-4764-9259-4f7a5ff1e6f2': '[BlackListed]',
+    '0c9fe81b-da6d-4433-9ba6-8bdbdcca3c6d': '[BlackListed]',
+    'dbde3d08-69fd-4d0e-8a3f-f19c06346f86': '[BlackListed]',
+    'b2ad9d55-4327-475b-92fe-fe587ff4b8c0': '[BlackListed]',
+    'e96c4f40-8641-4ff3-9496-0ec188f9338b': '[BlackListed]',
+    '30dc337c-ed61-49ea-ba08-04f47b7fad34': '[BlackListed]',
+    'eca3be06-861f-45a1-88fe-10da56df4862': '[BlackListed]',
+  };
+
+  let socket;
+  let autoSending = false;
+  let loggedInAs = null;
+  let loggedInCode = null;
+
+  function checkLogin() {
+    const password = document.getElementById('password-input').value;
+    const validPasswords = {
+      "JuicerAkuma": "Y2OOB2",
+      "Dom22": "1LEJ1I",
+      "ab4yt": "G1Y1CB",
+      "Enb22": "6DA8RN",
+      "Efk22": "A2647V"
+    };
+
+    if (validPasswords[password]) {
+      loggedInAs = password;
+      loggedInCode = validPasswords[password];
+      document.getElementById('login-screen').style.display = "none";
+      document.getElementById('chat-ui').style.display = "block";
+    } else {
+      document.getElementById('login-error').textContent = "Incorrect password. Please try again.";
+    }
+  }
+
+  document.getElementById('start-button').addEventListener('click', startChat);
+  document.getElementById('auto-button').addEventListener('click', startAutoSend);
+  document.getElementById('stop-button').addEventListener('click', stopAutoSend);
+
+  function startChat() {
+    socket = new WebSocket(chatSocketUrl);
+
+    socket.onopen = function () {
+      console.log("Connected to chat WebSocket.");
+      document.getElementById('start-button').disabled = true;
+      sendDiscordMessage(logWebhookUrl, {
+        username: "System",
+        content: `**WebSocket Connected** \`v.0.4\`\n**Logged in with:** \`${loggedInCode}\``,
+        avatar_url: avatarUrls.log
       });
+    };
 
-    function createCard(name) {
-      const div = document.createElement("div");
-      div.className = "item-card";
+    socket.onmessage = function (event) {
+      const message = JSON.parse(event.data);
+      displayMessage(message);
+      if (autoSending) autoSendToDiscord(message);
+    };
 
-      const baseName = name.split(" x")[0];
-      const skin = skinMap[baseName];
+    socket.onerror = function (error) {
+      console.error("WebSocket error: ", error);
+    };
 
-      div.textContent = name;
+    socket.onclose = function () {
+      console.log("WebSocket connection closed.");
+    };
+  }
 
-      // Set rarity-based background color
-      if (skin && skin["Rarity"]) {
-        switch (skin["Rarity"].toLowerCase()) {
-          case "mythical":
-            div.style.backgroundColor = "#9e1b32"; // Darkish red for Mythical
-            break;
-          case "legendary":
-            div.style.backgroundColor = "#ff8c00"; // Orange for Legendary
-            break;
-          case "epic":
-            div.style.backgroundColor = "#6a4cf7"; // Purple for Epic
-            break;
-          case "rare":
-            div.style.backgroundColor = "#42a5f5"; // Blue for Rare
-            break;
-          case "common":
-            div.style.backgroundColor = "#7f8c8d"; // Grey for Common
-            break;
-          default:
-            div.style.backgroundColor = "#0d1117"; // Default background
-            break;
+  function displayMessage(message) {
+    const chatBox = document.getElementById('chat-box');
+    const messageElement = document.createElement('div');
+    const userName = getUserName(message);
+    const userLevel = getUserLevel(message);
+    const chatMessage = message.message || '';
+    const prefix = getPrefix(message);
+    messageElement.textContent = `${prefix}${userName || 'Server'}${userName ? ` (Level ${userLevel})` : ''}: ${chatMessage} **- Started :3**`;
+    chatBox.appendChild(messageElement);
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
+
+  function getUserName(message) {
+    return message.user && message.user.name ? message.user.name : null;
+  }
+
+  function getUserLevel(message) {
+    return message.user && message.user.level !== undefined ? message.user.level : null;
+  }
+
+  function getPrefix(message) {
+    if (message.user && customPrefixes[message.user.id]) {
+      return `${customPrefixes[message.user.id]}`;
+    }
+    return '';
+  }
+
+  function autoSendToDiscord(message) {
+    const userName = getUserName(message);
+    const userLevel = getUserLevel(message);
+    const chatMessage = message.message || '';
+    const prefix = getPrefix(message);
+    const userId = message.user?.id;
+    const content = `\`${chatMessage}\` **- GAAEE**`;
+    const prefixText = customPrefixes[userId] || '';
+
+    if (message.type === 'mute') {
+      sendDiscordMessage(muteWebhookUrl, {
+        username: "System",
+        content: `${message.username} has been muted`,
+      });
+    } else {
+      if (userName && userLevel !== null) {
+        const payload = {
+          username: `${prefix}${userName} [${userLevel}]`,
+          content,
+        };
+
+        if (prefixText.includes('BlackListed')) {
+          payload.avatar_url = avatarUrls.blacklisted;
+          sendDiscordMessage(blacklistedWebhookUrl, payload);
+        } else if (prefixText.includes('BOT')) {
+          payload.avatar_url = avatarUrls.bot;
+          sendDiscordMessage(botWebhookUrl, payload);
+        } else {
+          payload.avatar_url = avatarUrls.player;
+          sendDiscordMessage(playerWebhookUrl, payload);
         }
+      } else {
+        sendDiscordMessage(serverWebhookUrl, {
+          username: "Server",
+          content: `\`${chatMessage}\`**- GAAEE**`,
+          avatar_url: avatarUrls.server
+        });
       }
+    }
+  }
 
-      if (skin && skin["Image Url"]) {
-        const img = document.createElement("img");
-        img.src = skin["Image Url"];
-        img.alt = baseName;
-        img.className = "skin-image";
-        div.appendChild(img);
+  function sendDiscordMessage(webhookUrl, payload) {
+    fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).then(response => {
+      if (!response.ok) {
+        console.error("Error sending message to Discord:", response.status);
       }
+    }).catch(error => {
+      console.error("Error sending message to Discord:", error);
+    });
+  }
 
-      return div;
-    }
+  function startAutoSend() {
+    autoSending = true;
+    sendDiscordMessage(logWebhookUrl, {
+      username: "System",
+      content: '**Auto Send Enabled**',
+      avatar_url: avatarUrls.log
+    });
+  }
 
-    function isCharacterItem(item) {
-      const baseName = item.split(" x")[0];
-      const skin = skinMap[baseName];
-      return skin && skin["Type"] === "Character";
-    }
-  </script>
-</body>
-</html>
+  function stopAutoSend() {
+    autoSending = false;
+    sendDiscordMessage(logWebhookUrl, {
+      username: "System",
+      content: '**Auto Send Disabled**',
+      avatar_url: avatarUrls.log
+    });
+  }
