@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Kirka Skins + Base Value</title>
+  <style>
+    body { background: #111; color: #eee; font-family: sans-serif; padding: 20px; }
+    .skin-card { background: #222; border-radius: 10px; padding: 10px; margin: 10px 0; display: flex; gap: 10px; }
+    .skin-card img { width: auto; height: auto; border-radius: 6px; }
+    .skin-info { line-height: 1.5; display: flex; flex-direction: column; gap: 4px; }
+    .price-list { margin-top: 30px; background: #1a1a1a; padding: 15px; border-radius: 10px; }
+    .filter-controls { margin-bottom: 20px; }
+    select, button { padding: 6px; background: #333; color: #eee; border: 1px solid #555; border-radius: 5px; cursor: pointer; }
+    .filter-buttons { margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap; }
+    .info-line { display: flex; align-items: center; gap: 6px; font-size: 14px; }
+    .info-line img { width: 20px; height: 20px; object-fit: cover; border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <h1>Kirka Skin Viewer</h1>
+
+  <div class="filter-controls">
+    <label for="typeFilter">Filter by Type:</label>
+    <select id="typeFilter">
+      <option value="All">All</option>
+      <option value="AR-9">AR-9</option>
+      <option value="M60">M60</option>
+      <option value="VITA">VITA</option>
+      <option value="LAR">LAR</option>
+      <option value="MAC-10">MAC-10</option>
+      <option value="Bayonet">Bayonet</option>
+      <option value="Revolver">Revolver</option>
+      <option value="SCAR">SCAR</option>
+      <option value="Shark">Shark</option>
+      <option value="Tomahawk">Tomahawk</option>
+      <option value="Weatie">Weatie</option>
+      <option value="Container">Container</option>
+    </select>
+
+    <div class="filter-buttons">
+      <button onclick="filterByType('All')">All</button>
+      <button onclick="filterByType('AR-9')">AR-9</button>
+      <button onclick="filterByType('M60')">M60</button>
+      <button onclick="filterByType('VITA')">VITA</button>
+      <button onclick="filterByType('LAR')">LAR</button>
+      <button onclick="filterByType('MAC-10')">MAC-10</button>
+      <button onclick="filterByType('Bayonet')">Bayonet</button>
+      <button onclick="filterByType('Revolver')">Revolver</button>
+      <button onclick="filterByType('SCAR')">SCAR</button>
+      <button onclick="filterByType('Shark')">Shark</button>
+      <button onclick="filterByType('Tomahawk')">Tomahawk</button>
+      <button onclick="filterByType('Weatie')">Weatie</button>
+      <button onclick="filterByType('Container')">Container</button>
+    </div>
+  </div>
+
+  <div id="skinsContainer">Loading skins...</div>
+  <div class="price-list" id="baseValueContainer">Loading price lists...</div>
+
+  <script>
+    let boltsMap = {};
+    let yzzzMap = {};
+    let allSkins = [];
+
+    document.getElementById('typeFilter').addEventListener('change', () => {
+      renderSkins();
+    });
+
+    function filterByType(type) {
+      document.getElementById('typeFilter').value = type;
+      renderSkins();
+    }
+
+    fetch('https://opensheet.elk.sh/1VqX9kwJx0WlHWKCJNGyIQe33APdUSXz0hEFk6x2-3bU/sorted+view')
+      .then(res => res.json())
+      .then(yzzzData => {
+        yzzzData.forEach(entry => {
+          const name = entry["Name"]?.trim();
+          if (name) {
+            yzzzMap[name] = entry["Base Value"];
+          }
+        });
+        fetchBolts();
+      })
+      .catch(err => {
+        document.getElementById('baseValueContainer').innerText = 'Error loading Yzzz sheet.';
+        console.error(err);
+      });
+
+    function fetchBolts() {
+      fetch('https://opensheet.elk.sh/1pxMSoaSo8FYv-OIJ26HpSj8EDy7EDRmatHyQW24o6E4/1')
+        .then(res => res.json())
+        .then(boltsData => {
+          boltsData.forEach(entry => {
+            const name = entry[""]?.trim();
+            if (name) {
+              boltsMap[name] = entry["Base Value"];
+            }
+          });
+
+          document.getElementById('baseValueContainer').innerHTML =
+            `<h2>Price Lists Loaded</h2><p>BOLTS: ${Object.keys(boltsMap).length} | Yzzz: ${Object.keys(yzzzMap).length}</p>`;
+
+          loadBrosSkins();
+        })
+        .catch(err => {
+          document.getElementById('baseValueContainer').innerText = 'Error loading Bolts sheet.';
+          console.error(err);
+        });
+    }
+
+    function loadBrosSkins() {
+      fetch('https://opensheet.elk.sh/1tzHjKpu2gYlHoCePjp6bFbKBGvZpwDjiRzT9ZUfNwbY/alphabetical')
+        .then(res => res.json())
+        .then(data => {
+          allSkins = data.sort((a, b) => a['Skin Name'].localeCompare(b['Skin Name']));
+          renderSkins();
+        })
+        .catch(err => {
+          document.getElementById('skinsContainer').innerText = 'Error loading skin data.';
+          console.error(err);
+        });
+    }
+
+    function renderSkins() {
+      const container = document.getElementById('skinsContainer');
+      const filterValue = document.getElementById('typeFilter').value;
+
+      container.innerHTML = '';
+
+      const filteredSkins = allSkins.filter(skin => filterValue === 'All' || skin['Type'] === filterValue);
+
+      filteredSkins.forEach(skin => {
+        const skinName = skin['Skin Name'];
+        const boltsValue = boltsMap[skinName] || 'N/A';
+        const yzzzValue = yzzzMap[skinName] || 'N/A';
+
+        const card = document.createElement('div');
+        card.className = 'skin-card';
+
+        card.innerHTML = `
+          <img src="${skin['Image Url']}" alt="${skinName}">
+          <div class="skin-info">
+            <div class="info-line"><img src="${skin['Image Url']}" alt="img"> <strong>${skinName}</strong></div>
+            <div class="info-line"><img src="${skin['Image Url']}" alt="img"> Type: ${skin['Type']}</div>
+            <div class="info-line"><img src="${skin['Image Url']}" alt="img"> Rarity: ${skin['Rarity']}</div>
+            <div class="info-line"><img src="${skin['Image Url']}" alt="img"> Price (BROS): ${skin['Price']}</div>
+            <div class="info-line"><img src="${skin['Image Url']}" alt="img"> Price (Bolts): ${boltsValue}</div>
+            <div class="info-line"><img src="${skin['Image Url']}" alt="img"> Price (Yzzz): ${yzzzValue}</div>
+            <div class="info-line"><img src="${skin['Image Url']}" alt="img"> Known Units: ${skin['Known Units']}</div>
+            <div class="info-line"><img src="${skin['Image Url']}" alt="img"> Still Obtainable?: ${skin['Still Obtainable']}</div>
+            <div class="info-line"><img src="${skin['Image Url']}" alt="img"> Method: ${skin['Obtain Method']}</div>
+            <div class="info-line"><img src="${skin['Image Url']}" alt="img"> Date: ${new Date(skin['Creation Date']).toLocaleDateString()}</div>
+            <div class="info-line"><img src="${skin['Image Url']}" alt="img"> CreatorID (unofficial): ${skin['CreatorID (unofficial)']}</div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+  </script>
+</body>
+</html>
