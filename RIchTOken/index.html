@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Discord Selfbot Rich Presence</title>
+<style>
+  /* Reset and base */
+  * {
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  html, body {
+    margin:0; padding:0; height:100%;
+    background: #121212;
+    color: #ddd;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 600px;
+    user-select: none;
+  }
+  #app {
+    background: #1e1e1e;
+    border-radius: 12px;
+    padding: 20px;
+    width: 350px;
+    max-width: 95vw;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.9);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  h1 {
+    margin: 0 0 12px 0;
+    font-weight: 700;
+    font-size: 1.5rem;
+    text-align:center;
+    color: #7289da;
+    user-select: text;
+  }
+  label {
+    display: block;
+    font-size: 0.875rem;
+    margin-bottom: 4px;
+    color: #bbb;
+  }
+  input[type="text"], input[type="password"], textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border: none;
+    border-radius: 8px;
+    background: #2f3136;
+    color: #ddd;
+    font-size: 1rem;
+    transition: background 0.3s ease;
+  }
+  input[type="text"]:focus, input[type="password"]:focus, textarea:focus {
+    outline: none;
+    background: #40444b;
+  }
+  textarea {
+    resize: vertical;
+    min-height: 40px;
+    max-height: 80px;
+  }
+  button {
+    background: #5865f2;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 1rem;
+    user-select: none;
+    transition: background 0.3s ease;
+  }
+  button:disabled {
+    background: #3a3c43;
+    cursor: not-allowed;
+  }
+  button:hover:not(:disabled) {
+    background: #4752c4;
+  }
+  #status {
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 8px;
+    border-radius: 8px;
+    background: #2f3136;
+    color: #ccc;
+    min-height: 24px;
+    text-align: center;
+    user-select: text;
+  }
+  #log {
+    height: 120px;
+    overflow-y: auto;
+    background: #2f3136;
+    border-radius: 8px;
+    padding: 10px;
+    font-family: monospace;
+    font-size: 0.75rem;
+    line-height: 1.2;
+    color: #99aab5;
+    white-space: pre-wrap;
+  }
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #1e1e1e;
+    border-radius: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #5865f2;
+    border-radius: 10px;
+  }
+  small {
+    margin-top: 4px;
+    font-size: 0.65rem;
+    color: #666;
+    user-select:none;
+  }
+</style>
+</head>
+<body>
+<div id="app" role="main">
+  <h1>Discord Selfbot Rich Presence</h1>
+  <label for="token">Your Discord Token</label>
+  <input type="password" id="token" autocomplete="off" placeholder="Paste your token here" aria-describedby="token-desc" />
+  <small id="token-desc">Keep this token private! Use at your own risk.</small>
+
+  <label for="details">Details</label>
+  <input type="text" id="details" placeholder="e.g. Playing a game" />
+
+  <label for="state">State</label>
+  <input type="text" id="state" placeholder="e.g. Coding a bot" />
+
+  <label for="largeImageKey">Large Image Key</label>
+  <input type="text" id="largeImageKey" placeholder="e.g. javascript-logo" value="Vink <3" />
+
+  <label for="largeImageText">Large Image Text</label>
+  <input type="text" id="largeImageText" placeholder="Tooltip on large image" value="VinK" />
+
+  <label for="smallImageKey">Small Image Key</label>
+  <input type="text" id="smallImageKey" placeholder="Discord asset key e.g. js" />
+
+  <label for="smallImageText">Small Image Text</label>
+  <input type="text" id="smallImageText" placeholder="Tooltip on small image" />
+
+  <label for="buttonsJson">Buttons (JSON array)</label>
+  <textarea id="buttonsJson" placeholder='[{"label":"Visit","url":"https://example.com"}]'></textarea>
+
+  <button id="connectBtn">Connect & Set Presence</button>
+
+  <div id="status" aria-live="polite">Disconnected</div>
+  <pre id="log" aria-live="polite"></pre>
+</div>
+
+<script>
+(() => {
+  const tokenInput = document.getElementById('token');
+  const detailsInput = document.getElementById('details');
+  const stateInput = document.getElementById('state');
+  const largeImageKeyInput = document.getElementById('largeImageKey');
+  const largeImageTextInput = document.getElementById('largeImageText');
+  const smallImageKeyInput = document.getElementById('smallImageKey');
+  const smallImageTextInput = document.getElementById('smallImageText');
+  const buttonsJsonInput = document.getElementById('buttonsJson');
+
+  const connectBtn = document.getElementById('connectBtn');
+  const statusEl = document.getElementById('status');
+  const logEl = document.getElementById('log');
+
+  let socket = null;
+  let heartbeatInterval = null;
+  let sessionId = null;
+  let sequence = null;
+
+  const log = (msg) => {
+    const now = new Date().toLocaleTimeString();
+    logEl.textContent += `[${now}] ${msg}\n`;
+    logEl.scrollTop = logEl.scrollHeight;
+  };
+
+  const updateStatus = (msg, color = '#ccc') => {
+    statusEl.textContent = msg;
+    statusEl.style.color = color;
+  };
+
+  let reconnectTimeout = null;
+
+  function connect() {
+    if (socket) {
+      cleanup();
+      socket.close(4000, 'User disconnect');
+      socket = null;
+    }
+
+    if (!tokenInput.value.trim()) {
+      alert('Please enter your Discord token.');
+      return;
+    }
+
+    updateStatus('Connecting...', '#faa');
+    log('Starting connection to Discord Gateway...');
+
+    socket = new WebSocket('wss://gateway.discord.gg/?v=9&encoding=json');
+
+    socket.onopen = () => {
+      log('WebSocket opened');
+    };
+
+    socket.onmessage = (event) => {
+      const payload = JSON.parse(event.data);
+      sequence = payload.s ?? sequence;
+
+      switch (payload.op) {
+        case 10: // Hello
+          log('Received HELLO, starting heartbeat');
+          startHeartbeat(payload.d.heartbeat_interval);
+          identify();
+          break;
+        case 11: // Heartbeat ACK
+          log('Received Heartbeat ACK');
+          break;
+        case 0: // Dispatch
+          log('Dispatch event: ' + payload.t);
+          if (payload.t === 'READY') {
+            sessionId = payload.d.session_id;
+            updateStatus('Connected', '#4caf50');
+            log('Ready event received: Session ID: ' + sessionId);
+            sendRichPresenceUpdate();
+          } else if (payload.t === 'PRESENCE_UPDATE') {
+            // Presence update ack
+          }
+          break;
+        case 9:
+          log('Invalid session. Will re-identify...');
+          identify();
+          break;
+        default:
+          // Other opcodes
+          break;
+      }
+    };
+
+    socket.onclose = (event) => {
+      updateStatus(`Disconnected (code: ${event.code})`, '#f44336');
+      log(`Socket closed: Code ${event.code} Reason: ${event.reason}`);
+      cleanup();
+
+      // Reconnect after 5 seconds
+      reconnectTimeout = setTimeout(() => {
+        log('Reconnecting...');
+        connect();
+      }, 5000);
+    };
+
+    socket.onerror = (error) => {
+      log('WebSocket error: ' + error.message);
+    };
+  }
+
+  function startHeartbeat(interval) {
+    if (heartbeatInterval) clearInterval(heartbeatInterval);
+    heartbeatInterval = setInterval(() => {
+      sendHeartbeat();
+    }, interval);
+    sendHeartbeat();
+  }
+
+  function sendHeartbeat() {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      const data = {
+        op: 1,
+        d: sequence,
+      };
+      socket.send(JSON.stringify(data));
+      log('Sent Heartbeat');
+    }
+  }
+
+  function identify() {
+    const token = tokenInput.value.trim();
+    if (!token) return;
+    const identifyPayload = {
+      op: 2,
+      d: {
+        token,
+        intents: 0,
+        properties: {
+          $os: navigator.platform,
+          $browser: "discord-selfbot",
+          $device: "discord-selfbot"
+        },
+        presence: {
+          status: "dnd",
+          activities: [],
+          since: null,
+          afk: false,
+        }
+      }
+    };
+    socket.send(JSON.stringify(identifyPayload));
+    log('Sent Identify payload');
+  }
+
+  function sendRichPresenceUpdate() {
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
+      log('Connection not established for presence update');
+      return;
+    }
+
+    const details = detailsInput.value.trim();
+    const state = stateInput.value.trim();
+    const largeImageKey = largeImageKeyInput.value.trim();
+    const largeImageText = largeImageTextInput.value.trim();
+    const smallImageKey = smallImageKeyInput.value.trim();
+    const smallImageText = smallImageTextInput.value.trim();
+
+    let buttons = [];
+    try {
+      const btns = buttonsJsonInput.value.trim();
+      if (btns.length > 0) {
+        buttons = JSON.parse(btns);
+        if (!Array.isArray(buttons)) {
+          log('Buttons JSON is not an array');
+          buttons = [];
+        } else {
+          // Validate buttons items
+          buttons = buttons.filter(b => typeof b.label === 'string' && typeof b.url === 'string');
+        }
+      }
+    } catch (e) {
+      log('Invalid buttons JSON: ' + e.message);
+      buttons = [];
+    }
+
+    const presence = {
+      status: "Dnd",
+      since: null,
+      afk: false,
+      activities: [{
+        name: "VinK on top!!",
+        type: 0,
+        details: details || undefined,
+        state: state || undefined,
+        timestamps: {
+          start: Date.now()
+        },
+        assets: {
+          large_image: largeImageKey || undefined,
+          large_text: largeImageText || undefined,
+          small_image: smallImageKey || undefined,
+          small_text: smallImageText || undefined,
+        },
+        buttons: buttons.length > 0 ? buttons : undefined,
+        flags: 1 << 1 // Instance flag to mark activity as instance
+      }]
+    };
+
+    // Clean undefined fields out of presence to avoid discord errors
+    function clean(obj) {
+      if (typeof obj !== 'object' || obj === null) return obj;
+      for (const key in obj) {
+        if (obj[key] === undefined) delete obj[key];
+        else if (typeof obj[key] === 'object') clean(obj[key]);
+      }
+      return obj;
+    }
+    clean(presence);
+
+    const payload = {
+      op: 3,
+      d: presence
+    };
+
+    socket.send(JSON.stringify(payload));
+    log('Sent Rich Presence update');
+  }
+
+  function cleanup() {
+    if (heartbeatInterval) {
+      clearInterval(heartbeatInterval);
+      heartbeatInterval = null;
+    }
+    if (reconnectTimeout) {
+      clearTimeout(reconnectTimeout);
+      reconnectTimeout = null;
+    }
+  }
+
+  connectBtn.addEventListener('click', () => {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      // Disconnect
+      cleanup();
+      socket.close(4000, 'User disconnect');
+      updateStatus('Disconnected', '#f44336');
+      connectBtn.textContent = 'Connect & Set Presence';
+      log('Disconnected by user');
+    } else {
+      connect();
+      connectBtn.textContent = 'Disconnect';
+    }
+  });
+
+})();
+</script>
+</body>
+</html>
+
